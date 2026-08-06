@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Add the four production products here when their identifiers are available.
+	     The StoreKit V1 manager and Recharge grid support any catalog size. -->
+	<key>KinvaConsumableProducts</key>
+	<array>
+		<dict>
+			<key>productIdentifier</key>
+			<string>lvbsvhxcgcrvesor</string>
+			<key>diamonds</key>
+			<integer>400</integer>
+			<key>displayPrice</key>
+			<string>$0.99</string>
+		</dict>
+		<dict>
+			<key>productIdentifier</key>
+			<string>dxismgcwewhrtezo</string>
+			<key>diamonds</key>
+			<integer>1200</integer>
+			<key>displayPrice</key>
+			<string>$1.99</string>
+		</dict>
+		<dict>
+			<key>productIdentifier</key>
+			<string>khtxlcejaxmqcsra</string>
+			<key>diamonds</key>
+			<integer>2450</integer>
+			<key>displayPrice</key>
+			<string>$4.99</string>
+		</dict>
+		<dict>
+			<key>productIdentifier</key>
+			<string>yadwwvxspgxwlndb</string>
+			<key>diamonds</key>
+			<integer>4900</integer>
+			<key>displayPrice</key>
+			<string>$9.99</string>
+		</dict>
+		<dict>
+			<key>productIdentifier</key>
+			<string>qnrcuelbtiuflyky</string>
+			<key>diamonds</key>
+			<integer>6400</integer>
+			<key>displayPrice</key>
+			<string>$12.99</string>
+		</dict>
+		<dict>
+			<key>productIdentifier</key>
+			<string>ymohxnvpkqxutvab</string>
+			<key>diamonds</key>
+			<integer>9800</integer>
+			<key>displayPrice</key>
+			<string>$19.99</string>
+		</dict>
+	</array>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>Default Configuration</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>
