@@ -357,6 +357,7 @@ final class AppCoordinator: NSObject, UITabBarControllerDelegate {
     private func openChallengeAccess(_ challenge: KinvaChallenge, from source: ChallengeDetailViewController?) {
         let screen = ChallengeAccessViewController(challenge: challenge)
         screen.onAuthor = { [weak self] id in self?.openProfile(userID: id) }
+        screen.onRecharge = { [weak self] in self?.openRecharge() }
         screen.onUnlocked = { [weak self] in
             self?.refreshAll()
         }
@@ -375,6 +376,7 @@ final class AppCoordinator: NSObject, UITabBarControllerDelegate {
     private func openInspiration() {
         guard requireSignedIn() else { return }
         let screen = InspirationSelectionViewController(); screen.onGenerated = { [weak screen] result in let next = InspirationResultViewController(result: result); next.onSaved = { [weak next] in next?.navigationController?.popToRootViewController(animated: true) }; screen?.navigationController?.pushSecondLevel(next, animated: true) }
+        screen.onRecharge = { [weak self] in self?.openRecharge() }
         currentNavigationController?.pushSecondLevel(screen, animated: true)
     }
 

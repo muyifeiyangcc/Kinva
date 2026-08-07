@@ -59,7 +59,7 @@ final class ComposePostViewController: BaseScrollViewController {
         contentStack.layoutMargins = UIEdgeInsets(top: 0, left: 0, bottom: 26, right: 0)
         contentStack.isLayoutMarginsRelativeArrangement = true
         contentStack.spacing = 20
-        let header = AppHeaderView(title: "Forgot")
+        let header = AppHeaderView(title: "Post")
         header.backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
         contentStack.addArrangedSubview(header)
 

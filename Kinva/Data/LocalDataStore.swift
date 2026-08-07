@@ -105,6 +105,32 @@ final class LocalDataStore {
                 defaults.set(4, forKey: seedVersionKey)
             }
         }
+        if defaults.integer(forKey: seedVersionKey) < 5 {
+            let seededChallenges = Dictionary(uniqueKeysWithValues: MockCatalog.challenges.map { ($0.id, $0) })
+            for index in challenges.indices {
+                guard let seeded = seededChallenges[challenges[index].id],
+                      challenges[index].authorID == seeded.authorID,
+                      challenges[index].mediaTokens == seeded.mediaTokens else { continue }
+                challenges[index].detail = seeded.detail
+            }
+            if let challengesData = try? encoder.encode(challenges) {
+                defaults.set(challengesData, forKey: challengesKey)
+                defaults.set(5, forKey: seedVersionKey)
+            }
+        }
+        if defaults.integer(forKey: seedVersionKey) < 6 {
+            let seededChallenges = Dictionary(uniqueKeysWithValues: MockCatalog.challenges.map { ($0.id, $0) })
+            for index in challenges.indices {
+                guard let seeded = seededChallenges[challenges[index].id],
+                      challenges[index].authorID == seeded.authorID,
+                      challenges[index].mediaTokens == seeded.mediaTokens else { continue }
+                challenges[index].diamondPrice = seeded.diamondPrice
+            }
+            if let challengesData = try? encoder.encode(challenges) {
+                defaults.set(challengesData, forKey: challengesKey)
+                defaults.set(6, forKey: seedVersionKey)
+            }
+        }
         if !defaults.bool(forKey: deletedSeedTestAccountKey),
            !loadedAccounts.values.contains(where: { Self.normalizeEmail($0.user.email) == Self.seedTestEmail }) {
             let test = Self.seedTestAccount()

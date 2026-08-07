@@ -658,6 +658,7 @@ final class ChallengeAccessViewController: UIViewController {
     var onFinished: (() -> Void)?
     var onPlay: ((KinvaChallenge) -> Void)?
     var onAuthor: ((String) -> Void)?
+    var onRecharge: (() -> Void)?
     var challenge: KinvaChallenge
     private let store = LocalDataStore.shared
     private let frameView: ChallengeVideoFrameView
@@ -774,8 +775,12 @@ final class ChallengeAccessViewController: UIViewController {
     @objc private func playTapped() { guard isUnlocked else { return }; onPlay?(challenge) }
     @objc private func unlockTapped() {
         guard !isUnlocked else { refreshUI(); return }
+        guard store.account.diamondBalance >= challenge.diamondPrice else {
+            showInsufficientDiamonds()
+            return
+        }
         showConfirmation(title: "Unlock Challenge",
-                         message: "Are you sure you want to spend \(challenge.diamondPrice) coins to unlock this challenge?",
+                         message: "Are you sure you want to spend \(challenge.diamondPrice) Diamonds to unlock this challenge?",
                          confirm: "Sure") { [weak self] in
             guard let self else { return }
             do {
@@ -783,12 +788,18 @@ final class ChallengeAccessViewController: UIViewController {
                 self.refreshUI()
                 self.onUnlocked?()
             } catch LocalStoreError.insufficientDiamonds {
-                self.showKinvaNotice(title: "Not Enough Diamond",
-                                     message: "Recharge your diamonds to unlock this challenge.")
+                self.showInsufficientDiamonds()
             } catch {
                 self.showKinvaNotice(title: "Could not unlock",
                                      message: error.localizedDescription)
             }
+        }
+    }
+    private func showInsufficientDiamonds() {
+        showConfirmation(title: "Not Enough Diamond",
+                         message: "You don’t have enough Diamonds to continue. Would you like to recharge now?",
+                         confirm: "Confirm") { [weak self] in
+            self?.onRecharge?()
         }
     }
     @objc private func joinTapped() {
@@ -980,6 +991,7 @@ final class ChallengeThumbnailCell: UICollectionViewCell {
 
 final class InspirationSelectionViewController: BaseScrollViewController {
     var onGenerated: ((InspirationResult) -> Void)?
+    var onRecharge: (() -> Void)?
     private let groups: [(String, [String])] = [("Core Direction", ["Dance Flow", "Freestyle Movement", "Stretch Performance"]), ("Movement Texture", ["Liquid & Flowy", "Sharp & Robotic", "Heavy & Grounded", "Ethereal & Airy", "Dramatic & Emotional"]), ("Body Focus", ["Floor Work", "Upper Body", "Spine Wave", "Wall-Assisted Flow", "Balance & Lines"])]
     private var selected = Set<String>()
 
@@ -1008,7 +1020,23 @@ final class InspirationSelectionViewController: BaseScrollViewController {
     @objc private func tagTapped(_ sender: PillButton) { guard let text = sender.title(for: .normal) else { return }; if selected.contains(text) { selected.remove(text); sender.isPillSelected = false } else { selected.insert(text); sender.isPillSelected = true } }
     @objc private func generateTapped() {
         let core = Set(groups[0].1); guard !selected.isDisjoint(with: core) else { showLocalAlert(title: "Choose a direction", message: "Select at least one core direction."); return }
-        do { onGenerated?(try LocalDataStore.shared.generateInspiration(tags: Array(selected))) } catch LocalStoreError.insufficientDiamonds { showLocalAlert(title: "Not Enough Diamond", message: "Recharge from your profile and try again.") } catch { showLocalAlert(title: "Could not generate", message: error.localizedDescription) }
+        guard LocalDataStore.shared.account.diamondBalance >= 300 else { showInsufficientDiamonds(); return }
+        let tags = Array(selected)
+        showConfirmation(title: "Generate Inspiration",
+                         message: "Are you sure you want to spend 300 Diamonds to generate this content?",
+                         confirm: "Confirm") { [weak self] in
+            self?.generate(tags: tags)
+        }
+    }
+    private func generate(tags: [String]) {
+        do { onGenerated?(try LocalDataStore.shared.generateInspiration(tags: tags)) } catch LocalStoreError.insufficientDiamonds { showInsufficientDiamonds() } catch { showLocalAlert(title: "Could not generate", message: error.localizedDescription) }
+    }
+    private func showInsufficientDiamonds() {
+        showConfirmation(title: "Not Enough Diamond",
+                         message: "You don’t have enough Diamonds to continue. Would you like to recharge now?",
+                         confirm: "Confirm") { [weak self] in
+            self?.onRecharge?()
+        }
     }
     @objc private func backTapped() { navigationController?.popViewController(animated: true) }
 }
