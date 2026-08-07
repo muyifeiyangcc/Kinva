@@ -10,7 +10,7 @@ final class AccountConfirmationViewController: UIViewController {
             switch self {
             case .signOut: return "Sign Out"
             case .deleteAccount: return "Delete Account"
-            case .authenticationRequired: return "Hint"
+            case .authenticationRequired: return "Sign In Required"
             }
         }
         var message: String {
@@ -20,7 +20,7 @@ final class AccountConfirmationViewController: UIViewController {
             case .deleteAccount:
                 return "Are you sure you want to delete this account? All data will be cleared after deletion and cannot be recovered."
             case .authenticationRequired:
-                return "To ensure the normal operation of the function, please log in to your account first."
+                return "To ensure the normal operation of the function, please sign in to your account first."
             }
         }
         var confirmTitle: String {

@@ -52,7 +52,7 @@ final class ChallengeHomeViewController: BaseScrollViewController {
         card.contentMode = .scaleToFill
         card.translatesAutoresizingMaskIntoConstraints = false
         let title = UILabel(); title.text = "KINVA AI"; title.font = roundedFont(27, .heavy); title.textColor = .white
-        let subtitle = UILabel(); subtitle.text = "Get Tips to Learn Dancing\nStep by Step"; subtitle.numberOfLines = 2; subtitle.font = roundedFont(13, .bold); subtitle.textColor = .white
+        let subtitle = UILabel(); subtitle.text = "Your smart coach for movement, stretch, \n and creative expression."; subtitle.numberOfLines = 2; subtitle.font = roundedFont(13, .bold); subtitle.textColor = .white
         let get = UIButton(type: .system); get.setTitle("Get", for: .normal); get.setTitleColor(.black, for: .normal); get.backgroundColor = .white; get.titleLabel?.font = roundedFont(14, .bold); get.round(14)
         [title, subtitle, get].forEach { $0.translatesAutoresizingMaskIntoConstraints = false; wrapper.addSubview($0) }
         get.isUserInteractionEnabled = false
