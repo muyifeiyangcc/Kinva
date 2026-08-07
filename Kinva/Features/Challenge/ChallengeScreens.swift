@@ -608,16 +608,28 @@ final class ChallengeDetailViewController: UIViewController, UICollectionViewDat
         joinButton.setTitle(challenge.participantIDs.contains(store.currentUserID) ? "Joined  ✓" : "Join Challenge   →", for: .normal)
     }
     private func rebuildThumbnails() {
-        thumbnailChallenges = store.visibleChallenges()
+        let currentCategory = normalizedCategory(challenge.category)
+        thumbnailChallenges = store.visibleChallenges().filter {
+            normalizedCategory($0.category) == currentCategory
+        }
         thumbnailCollectionView.reloadData()
     }
     private func selectChallenge(id: String) {
-        let values = store.visibleChallenges()
-        guard let index = values.firstIndex(where: { $0.id == id }) else { return }
-        challenge = values[index]
+        guard let index = thumbnailChallenges.firstIndex(where: { $0.id == id }) else { return }
+        challenge = thumbnailChallenges[index]
         frameView.setTokens(challenge.mediaTokens, style: index)
         refreshUI()
-        thumbnailCollectionView.reloadData()
+        rebuildThumbnails()
+        guard let selectedIndex = thumbnailChallenges.firstIndex(where: { $0.id == challenge.id }) else { return }
+        thumbnailCollectionView.scrollToItem(
+            at: IndexPath(item: selectedIndex, section: 0),
+            at: .centeredHorizontally,
+            animated: true
+        )
+    }
+
+    private func normalizedCategory(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
