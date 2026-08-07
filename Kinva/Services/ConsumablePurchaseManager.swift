@@ -23,12 +23,16 @@ final class ConsumablePurchaseManager: NSObject {
     }
 
     private static let fallbackConfigurations: [Configuration] = [
-        Configuration(identifier: "lvbsvhxcgcrvesor", diamonds: 400, displayPrice: "$0.99"),
-        Configuration(identifier: "dxismgcwewhrtezo", diamonds: 1_200, displayPrice: "$1.99"),
-        Configuration(identifier: "khtxlcejaxmqcsra", diamonds: 2_450, displayPrice: "$4.99"),
-        Configuration(identifier: "yadwwvxspgxwlndb", diamonds: 4_900, displayPrice: "$9.99"),
-        Configuration(identifier: "qnrcuelbtiuflyky", diamonds: 6_400, displayPrice: "$12.99"),
-        Configuration(identifier: "ymohxnvpkqxutvab", diamonds: 9_800, displayPrice: "$19.99")
+        Configuration(identifier: "zwzmodcmkqkhvved", diamonds: 400, displayPrice: "$0.99"),
+        Configuration(identifier: "jurnintfnozyilpw", diamonds: 1_200, displayPrice: "$1.99"),
+        Configuration(identifier: "mnnpmcndncqtojxp", diamonds: 2_450, displayPrice: "$4.99"),
+        Configuration(identifier: "xkckndlfqkslqkdf", diamonds: 4_900, displayPrice: "$9.99"),
+        Configuration(identifier: "ajtmpiofycjrjxww", diamonds: 6_400, displayPrice: "$12.99"),
+        Configuration(identifier: "wehtrucfbainxgqn", diamonds: 9_800, displayPrice: "$19.99"),
+        Configuration(identifier: "bshwyofiwvkwjyer", diamonds: 14_900, displayPrice: "$29.99"),
+        Configuration(identifier: "aqikhijvnzfggsso", diamonds: 24_500, displayPrice: "$49.99"),
+        Configuration(identifier: "znsgbfpvsfeldalb", diamonds: 34_500, displayPrice: "$69.99"),
+        Configuration(identifier: "tfmuzjyjtxyaoyfv", diamonds: 49_000, displayPrice: "$99.99")
     ]
 
     private lazy var configurations = Self.loadConfigurations()

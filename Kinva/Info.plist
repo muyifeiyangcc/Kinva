@@ -2,13 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Add the four production products here when their identifiers are available.
-	     The StoreKit V1 manager and Recharge grid support any catalog size. -->
+	<!-- StoreKit V1 consumable diamond catalog, ordered for Recharge display. -->
 	<key>KinvaConsumableProducts</key>
 	<array>
 		<dict>
 			<key>productIdentifier</key>
-			<string>lvbsvhxcgcrvesor</string>
+			<string>zwzmodcmkqkhvved</string>
 			<key>diamonds</key>
 			<integer>400</integer>
 			<key>displayPrice</key>
@@ -16,7 +15,7 @@
 		</dict>
 		<dict>
 			<key>productIdentifier</key>
-			<string>dxismgcwewhrtezo</string>
+			<string>jurnintfnozyilpw</string>
 			<key>diamonds</key>
 			<integer>1200</integer>
 			<key>displayPrice</key>
@@ -24,7 +23,7 @@
 		</dict>
 		<dict>
 			<key>productIdentifier</key>
-			<string>khtxlcejaxmqcsra</string>
+			<string>mnnpmcndncqtojxp</string>
 			<key>diamonds</key>
 			<integer>2450</integer>
 			<key>displayPrice</key>
@@ -32,7 +31,7 @@
 		</dict>
 		<dict>
 			<key>productIdentifier</key>
-			<string>yadwwvxspgxwlndb</string>
+			<string>xkckndlfqkslqkdf</string>
 			<key>diamonds</key>
 			<integer>4900</integer>
 			<key>displayPrice</key>
@@ -40,7 +39,7 @@
 		</dict>
 		<dict>
 			<key>productIdentifier</key>
-			<string>qnrcuelbtiuflyky</string>
+			<string>ajtmpiofycjrjxww</string>
 			<key>diamonds</key>
 			<integer>6400</integer>
 			<key>displayPrice</key>
@@ -48,11 +47,43 @@
 		</dict>
 		<dict>
 			<key>productIdentifier</key>
-			<string>ymohxnvpkqxutvab</string>
+			<string>wehtrucfbainxgqn</string>
 			<key>diamonds</key>
 			<integer>9800</integer>
 			<key>displayPrice</key>
 			<string>$19.99</string>
+		</dict>
+		<dict>
+			<key>productIdentifier</key>
+			<string>bshwyofiwvkwjyer</string>
+			<key>diamonds</key>
+			<integer>14900</integer>
+			<key>displayPrice</key>
+			<string>$29.99</string>
+		</dict>
+		<dict>
+			<key>productIdentifier</key>
+			<string>aqikhijvnzfggsso</string>
+			<key>diamonds</key>
+			<integer>24500</integer>
+			<key>displayPrice</key>
+			<string>$49.99</string>
+		</dict>
+		<dict>
+			<key>productIdentifier</key>
+			<string>znsgbfpvsfeldalb</string>
+			<key>diamonds</key>
+			<integer>34500</integer>
+			<key>displayPrice</key>
+			<string>$69.99</string>
+		</dict>
+		<dict>
+			<key>productIdentifier</key>
+			<string>tfmuzjyjtxyaoyfv</string>
+			<key>diamonds</key>
+			<integer>49000</integer>
+			<key>displayPrice</key>
+			<string>$99.99</string>
 		</dict>
 	</array>
 	<key>UIApplicationSceneManifest</key>
