@@ -317,6 +317,11 @@ final class AppCoordinator: NSObject, UITabBarControllerDelegate {
         screen.onCreateChallenge = { [weak self] in self?.openCreateChallenge() }
         screen.onInspiration = { [weak self] in self?.openInspiration() }
         screen.onChallenge = { [weak self] value in self?.openChallenge(value) }
+        screen.onUnlockRequest = { [weak self, weak screen] value in
+            guard let self, let screen, self.requireSignedIn() else { return }
+            screen.presentUnlock(for: value)
+        }
+        screen.onRecharge = { [weak self] in self?.openRecharge() }
     }
 
     private func openCreateChallenge() {

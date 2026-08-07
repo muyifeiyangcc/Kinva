@@ -5,13 +5,13 @@ final class AgreementModalViewController: UIViewController {
     var onAgree: (() -> Void)?
 
     let titleLabel = kinvaAuthLabel(text: "EULA", size: 26, weight: .bold, textStyle: .title1)
-    let bodyLabel = kinvaAuthLabel(size: 16, weight: .semibold, textStyle: .body)
     let cancelButton = UIButton(type: .system)
     let agreeButton = BrandButton(title: "Agree")
+    private let body: String
 
     init(body: String) {
+        self.body = body
         super.init(nibName: nil, bundle: nil)
-        bodyLabel.text = body
         modalPresentationStyle = .overFullScreen
         modalTransitionStyle = .crossDissolve
     }
@@ -31,13 +31,14 @@ final class AgreementModalViewController: UIViewController {
         card.round(22)
         titleLabel.textAlignment = .center
         titleLabel.accessibilityTraits = .header
-        bodyLabel.numberOfLines = 0
-        bodyLabel.textAlignment = .center
 
         let textScroll = UIScrollView()
         textScroll.alwaysBounceVertical = true
-        bodyLabel.translatesAutoresizingMaskIntoConstraints = false
-        textScroll.addSubview(bodyLabel)
+        textScroll.showsVerticalScrollIndicator = true
+
+        let bodyStack = makeBodyStack()
+        bodyStack.translatesAutoresizingMaskIntoConstraints = false
+        textScroll.addSubview(bodyStack)
 
         cancelButton.setTitle("Cancel", for: .normal)
         cancelButton.setTitleColor(.black, for: .normal)
@@ -72,17 +73,80 @@ final class AgreementModalViewController: UIViewController {
             textScroll.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -18),
             textScroll.heightAnchor.constraint(greaterThanOrEqualToConstant: 260),
             textScroll.heightAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.63),
-            bodyLabel.topAnchor.constraint(equalTo: textScroll.contentLayoutGuide.topAnchor),
-            bodyLabel.leadingAnchor.constraint(equalTo: textScroll.contentLayoutGuide.leadingAnchor),
-            bodyLabel.trailingAnchor.constraint(equalTo: textScroll.contentLayoutGuide.trailingAnchor),
-            bodyLabel.bottomAnchor.constraint(equalTo: textScroll.contentLayoutGuide.bottomAnchor),
-            bodyLabel.widthAnchor.constraint(equalTo: textScroll.frameLayoutGuide.widthAnchor),
+            bodyStack.topAnchor.constraint(equalTo: textScroll.contentLayoutGuide.topAnchor),
+            bodyStack.leadingAnchor.constraint(equalTo: textScroll.contentLayoutGuide.leadingAnchor),
+            bodyStack.trailingAnchor.constraint(equalTo: textScroll.contentLayoutGuide.trailingAnchor),
+            bodyStack.bottomAnchor.constraint(equalTo: textScroll.contentLayoutGuide.bottomAnchor),
+            bodyStack.widthAnchor.constraint(equalTo: textScroll.frameLayoutGuide.widthAnchor),
             buttons.topAnchor.constraint(equalTo: textScroll.bottomAnchor, constant: 12),
             buttons.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
             buttons.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14),
             buttons.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -22),
             buttons.heightAnchor.constraint(greaterThanOrEqualToConstant: 43)
         ])
+    }
+
+    private func makeBodyStack() -> UIStackView {
+        let paragraphs = body
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        let views = paragraphs.map { paragraph -> UIView in
+            guard let numbered = numberedParagraph(from: paragraph) else {
+                return makeParagraphLabel(text: paragraph)
+            }
+
+            let numberLabel = makeParagraphLabel(text: numbered.number)
+            numberLabel.numberOfLines = 1
+            numberLabel.textAlignment = .right
+            numberLabel.setContentHuggingPriority(.required, for: .horizontal)
+            numberLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+            numberLabel.widthAnchor.constraint(equalToConstant: 28).isActive = true
+
+            let textLabel = makeParagraphLabel(text: numbered.text)
+            let row = UIStackView(arrangedSubviews: [numberLabel, textLabel])
+            row.axis = .horizontal
+            row.alignment = .top
+            row.spacing = 7
+            return row
+        }
+
+        let stack = UIStackView(arrangedSubviews: views)
+        stack.axis = .vertical
+        stack.alignment = .fill
+        stack.spacing = 14
+        return stack
+    }
+
+    private func makeParagraphLabel(text: String) -> UILabel {
+        let label = kinvaAuthLabel(text: text, size: 15, weight: .semibold, textStyle: .body)
+        label.numberOfLines = 0
+        label.textAlignment = .left
+
+        let style = NSMutableParagraphStyle()
+        style.alignment = .left
+        style.lineSpacing = 2
+        label.attributedText = NSAttributedString(
+            string: text,
+            attributes: [
+                .font: label.font as Any,
+                .foregroundColor: label.textColor as Any,
+                .paragraphStyle: style
+            ]
+        )
+        return label
+    }
+
+    private func numberedParagraph(from paragraph: String) -> (number: String, text: String)? {
+        guard let dotIndex = paragraph.firstIndex(of: ".") else { return nil }
+        let numberPart = String(paragraph[..<dotIndex])
+        guard !numberPart.isEmpty, numberPart.allSatisfy(\.isNumber) else { return nil }
+
+        let textStart = paragraph.index(after: dotIndex)
+        let text = paragraph[textStart...].trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return nil }
+        return (numberPart + ".", text)
     }
 
     @objc private func cancelTapped() { onCancel?() }

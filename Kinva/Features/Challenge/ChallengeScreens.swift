@@ -6,6 +6,8 @@ final class ChallengeHomeViewController: BaseScrollViewController {
     var onCreateChallenge: (() -> Void)?
     var onInspiration: (() -> Void)?
     var onChallenge: ((KinvaChallenge) -> Void)?
+    var onUnlockRequest: ((KinvaChallenge) -> Void)?
+    var onRecharge: (() -> Void)?
     private let store = LocalDataStore.shared
     private let carousel = ChallengeCardCarouselView()
 
@@ -85,20 +87,63 @@ final class ChallengeHomeViewController: BaseScrollViewController {
         // Home and detail must expose the exact same challenge collection.
         // The carousel handles stacking visually, so there is no need to pad
         // or truncate the underlying data to three items.
-        carousel.setChallenges(values) { [weak self] challenge in self?.onChallenge?(challenge) }
+        carousel.setChallenges(
+            values,
+            isLocked: { [weak self] challenge in self?.isLocked(challenge) ?? false },
+            selection: { [weak self] challenge in self?.onChallenge?(challenge) },
+            unlock: { [weak self] challenge in self?.onUnlockRequest?(challenge) }
+        )
+    }
+    private func isLocked(_ challenge: KinvaChallenge) -> Bool {
+        challenge.diamondPrice > 0 &&
+        challenge.authorID != store.currentUserID &&
+        !store.account.unlockedChallengeIDs.contains(challenge.id)
+    }
+    func presentUnlock(for challenge: KinvaChallenge) {
+        guard isLocked(challenge) else { reloadChallenges(); return }
+        guard store.account.diamondBalance >= challenge.diamondPrice else {
+            showConfirmation(title: "Not Enough Diamond",
+                             message: "You don’t have enough Diamonds to continue. Would you like to recharge now?",
+                             confirm: "Confirm") { [weak self] in
+                self?.onRecharge?()
+            }
+            return
+        }
+        showConfirmation(title: "Unlock Challenge",
+                         message: "Are you sure you want to spend \(challenge.diamondPrice) Diamonds to unlock this challenge?",
+                         confirm: "Sure") { [weak self] in
+            guard let self else { return }
+            do {
+                try self.store.unlockChallenge(id: challenge.id)
+                self.reloadChallenges()
+            } catch LocalStoreError.insufficientDiamonds {
+                self.showConfirmation(title: "Not Enough Diamond",
+                                      message: "You don’t have enough Diamonds to continue. Would you like to recharge now?",
+                                      confirm: "Confirm") { [weak self] in
+                    self?.onRecharge?()
+                }
+            } catch {
+                self.showKinvaNotice(title: "Could not unlock", message: error.localizedDescription)
+            }
+        }
     }
     @objc private func createTapped() { onCreateChallenge?() }
     @objc private func aiTapped() { onInspiration?() }
 }
 
-final class ChallengeCardView: UIView {
+final class ChallengeCardView: UIView, UIGestureRecognizerDelegate {
     var onTap: (() -> Void)?
+    var onUnlock: (() -> Void)?
     let tapGesture = UITapGestureRecognizer()
     private let content = UIView()
     private let thumbnail = UIImageView()
     private let stackIndicator = UIView()
+    private let lockBlur = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    private let unlockControl = UIControl()
+    private let unlockPriceLabel = UILabel()
     private let shade = CAGradientLayer()
     private let representedID: String
+    private(set) var isLocked = false
 
     init(challenge: KinvaChallenge, style _: Int) {
         representedID = challenge.id
@@ -123,6 +168,10 @@ final class ChallengeCardView: UIView {
         imageWash.isUserInteractionEnabled = false
         imageWash.translatesAutoresizingMaskIntoConstraints = false
         content.addSubview(imageWash)
+        lockBlur.alpha = 0.64
+        lockBlur.isUserInteractionEnabled = false
+        lockBlur.translatesAutoresizingMaskIntoConstraints = false
+        content.addSubview(lockBlur)
         shade.colors = [UIColor.white.withAlphaComponent(0.05).cgColor, UIColor.clear.cgColor, UIColor.black.withAlphaComponent(0.46).cgColor]
         shade.locations = [0, 0.52, 1]
         content.layer.addSublayer(shade)
@@ -133,19 +182,26 @@ final class ChallengeCardView: UIView {
         stackIndicator.alpha = 0
         stackIndicator.isUserInteractionEnabled = false
         [title, button, stackIndicator].forEach { $0.translatesAutoresizingMaskIntoConstraints = false; content.addSubview($0) }
+        configureUnlockControl()
+        content.addSubview(unlockControl)
         NSLayoutConstraint.activate([
             content.topAnchor.constraint(equalTo: topAnchor), content.leadingAnchor.constraint(equalTo: leadingAnchor), content.trailingAnchor.constraint(equalTo: trailingAnchor), content.bottomAnchor.constraint(equalTo: bottomAnchor),
             thumbnail.topAnchor.constraint(equalTo: content.topAnchor), thumbnail.leadingAnchor.constraint(equalTo: content.leadingAnchor), thumbnail.trailingAnchor.constraint(equalTo: content.trailingAnchor), thumbnail.bottomAnchor.constraint(equalTo: content.bottomAnchor),
             imageWash.topAnchor.constraint(equalTo: content.topAnchor), imageWash.leadingAnchor.constraint(equalTo: content.leadingAnchor), imageWash.trailingAnchor.constraint(equalTo: content.trailingAnchor), imageWash.bottomAnchor.constraint(equalTo: content.bottomAnchor),
+            lockBlur.topAnchor.constraint(equalTo: content.topAnchor), lockBlur.leadingAnchor.constraint(equalTo: content.leadingAnchor), lockBlur.trailingAnchor.constraint(equalTo: content.trailingAnchor), lockBlur.bottomAnchor.constraint(equalTo: content.bottomAnchor),
             title.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 30), title.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -18), title.topAnchor.constraint(equalTo: content.topAnchor, constant: 34),
             button.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 39), button.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -39), button.heightAnchor.constraint(equalToConstant: 54), button.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -42),
             stackIndicator.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 17),
             stackIndicator.centerYAnchor.constraint(equalTo: content.centerYAnchor, constant: 8),
             stackIndicator.widthAnchor.constraint(equalToConstant: 8),
-            stackIndicator.heightAnchor.constraint(equalToConstant: 66)
+            stackIndicator.heightAnchor.constraint(equalToConstant: 66),
+            unlockControl.centerXAnchor.constraint(equalTo: content.centerXAnchor),
+            unlockControl.centerYAnchor.constraint(equalTo: content.centerYAnchor, constant: -4)
         ])
         tapGesture.addTarget(self, action: #selector(tap))
+        tapGesture.delegate = self
         addGestureRecognizer(tapGesture)
+        updateLock(isLocked: false, price: challenge.diamondPrice)
         ChallengeVideoThumbnailProvider.load(tokens: challenge.mediaTokens) { [weak self] image in
             guard let self, self.representedID == challenge.id else { return }
             self.thumbnail.image = image
@@ -154,7 +210,47 @@ final class ChallengeCardView: UIView {
     required init?(coder: NSCoder) { fatalError() }
     override func layoutSubviews() { super.layoutSubviews(); shade.frame = content.bounds }
     func setStackIndicatorAlpha(_ alpha: CGFloat) { stackIndicator.alpha = alpha }
+    func updateLock(isLocked: Bool, price: Int) {
+        self.isLocked = isLocked
+        lockBlur.isHidden = !isLocked
+        unlockControl.isHidden = !isLocked
+        unlockPriceLabel.text = "×\(price)"
+    }
+    private func configureUnlockControl() {
+        let lock = UIImageView(image: UIImage(named: "lock")?.withRenderingMode(.alwaysOriginal))
+        lock.contentMode = .scaleAspectFit
+        lock.translatesAutoresizingMaskIntoConstraints = false
+        let text = UILabel(); text.text = "Unlock with"; text.textColor = .white; text.font = roundedFont(17, .bold)
+        let diamond = UIImageView(image: UIImage(named: "diamond")?.withRenderingMode(.alwaysOriginal))
+        diamond.contentMode = .scaleAspectFit
+        diamond.translatesAutoresizingMaskIntoConstraints = false
+        unlockPriceLabel.textColor = .white
+        unlockPriceLabel.font = roundedFont(17, .bold)
+        let priceRow = UIStackView(arrangedSubviews: [text, diamond, unlockPriceLabel])
+        priceRow.axis = .horizontal; priceRow.alignment = .center; priceRow.spacing = 6
+        let stack = UIStackView(arrangedSubviews: [lock, priceRow])
+        stack.axis = .vertical; stack.alignment = .center; stack.spacing = 12
+        stack.isUserInteractionEnabled = false
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        unlockControl.accessibilityLabel = "Unlock challenge"
+        unlockControl.translatesAutoresizingMaskIntoConstraints = false
+        unlockControl.addTarget(self, action: #selector(unlockTapped), for: .touchUpInside)
+        unlockControl.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: unlockControl.topAnchor),
+            stack.leadingAnchor.constraint(equalTo: unlockControl.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: unlockControl.trailingAnchor),
+            stack.bottomAnchor.constraint(equalTo: unlockControl.bottomAnchor),
+            lock.widthAnchor.constraint(equalToConstant: 56), lock.heightAnchor.constraint(equalToConstant: 56),
+            diamond.widthAnchor.constraint(equalToConstant: 19), diamond.heightAnchor.constraint(equalToConstant: 19)
+        ])
+    }
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        guard gestureRecognizer === tapGesture, let touchedView = touch.view else { return true }
+        return touchedView !== unlockControl && !touchedView.isDescendant(of: unlockControl)
+    }
     @objc private func tap() { onTap?() }
+    @objc private func unlockTapped() { onUnlock?() }
 }
 
 private final class ChallengeCardCarouselView: UIView, UIGestureRecognizerDelegate {
@@ -162,6 +258,7 @@ private final class ChallengeCardCarouselView: UIView, UIGestureRecognizerDelega
     private var cards: [ChallengeCardView] = []
     private var challenges: [KinvaChallenge] = []
     private var selection: ((KinvaChallenge) -> Void)?
+    private var unlockSelection: ((KinvaChallenge) -> Void)?
     private var isInteracting = false
     private weak var owningScrollView: UIScrollView?
     private lazy var pan = UIPanGestureRecognizer(target: self, action: #selector(panned(_:)))
@@ -211,17 +308,42 @@ private final class ChallengeCardCarouselView: UIView, UIGestureRecognizerDelega
         return false
     }
 
-    func setChallenges(_ values: [KinvaChallenge], selection: @escaping (KinvaChallenge) -> Void) {
-        guard values.map(\.id) != challenges.map(\.id) || cards.isEmpty else { self.selection = selection; return }
+    func setChallenges(_ values: [KinvaChallenge],
+                       isLocked: (KinvaChallenge) -> Bool,
+                       selection: @escaping (KinvaChallenge) -> Void,
+                       unlock: @escaping (KinvaChallenge) -> Void) {
+        let updatedByID = Dictionary(uniqueKeysWithValues: values.map { ($0.id, $0) })
+        let hasSameChallenges = values.count == challenges.count &&
+            Set(values.map(\.id)) == Set(challenges.map(\.id))
+        if hasSameChallenges, !cards.isEmpty {
+            self.selection = selection
+            self.unlockSelection = unlock
+            for index in challenges.indices {
+                guard let updated = updatedByID[challenges[index].id] else { continue }
+                challenges[index] = updated
+                cards[index].updateLock(isLocked: isLocked(updated), price: updated.diamondPrice)
+            }
+            return
+        }
         cards.forEach { $0.removeFromSuperview() }
         challenges = values
         self.selection = selection
+        self.unlockSelection = unlock
         cards = values.enumerated().map { index, challenge in
             let card = ChallengeCardView(challenge: challenge, style: index)
+            card.updateLock(isLocked: isLocked(challenge), price: challenge.diamondPrice)
             card.tapGesture.require(toFail: pan)
             card.onTap = { [weak self, weak card] in
                 guard let self, let card, card === self.cards.first, let challenge = self.challenges.first else { return }
-                self.selection?(challenge)
+                if card.isLocked {
+                    self.unlockSelection?(challenge)
+                } else {
+                    self.selection?(challenge)
+                }
+            }
+            card.onUnlock = { [weak self, weak card] in
+                guard let self, let card, card === self.cards.first, let challenge = self.challenges.first else { return }
+                self.unlockSelection?(challenge)
             }
             return card
         }
