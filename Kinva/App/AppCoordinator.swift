@@ -3,6 +3,8 @@ import Darwin
 
 @MainActor
 final class AppCoordinator: NSObject, UITabBarControllerDelegate {
+    private static let privacyPolicyURL = "https://sites.google.com/view/kinva/privacy"
+    private static let termsOfServiceURL = "https://sites.google.com/view/kinva/terms-of-service"
     private let window: UIWindow
     private let store = LocalDataStore.shared
     private var tabBarController: UITabBarController?
@@ -91,11 +93,11 @@ final class AppCoordinator: NSObject, UITabBarControllerDelegate {
         screen.onAppleIdentity = { [weak self] in self?.showProfileForm(mode: .onboarding, from: screen) }
         screen.onOpenTerms = { [weak self, weak screen] in
             guard let self, let screen else { return }
-            self.openInternalWebPage(title: "Terms of Service", from: screen)
+            self.openInternalWebPage(title: "Terms of Service", urlString: Self.termsOfServiceURL, from: screen)
         }
         screen.onOpenPrivacy = { [weak self, weak screen] in
             guard let self, let screen else { return }
-            self.openInternalWebPage(title: "Privacy Policy", from: screen)
+            self.openInternalWebPage(title: "Privacy Policy", urlString: Self.privacyPolicyURL, from: screen)
         }
         setRoot(screen)
     }
@@ -559,9 +561,9 @@ final class AppCoordinator: NSObject, UITabBarControllerDelegate {
             guard let self, let screen else { return }
             switch item {
             case .privacyPolicy:
-                self.openInternalWebPage(title: "Privacy Policy", from: screen)
+                self.openInternalWebPage(title: "Privacy Policy", urlString: Self.privacyPolicyURL, from: screen)
             case .termsOfService:
-                self.openInternalWebPage(title: "Terms of Service", from: screen)
+                self.openInternalWebPage(title: "Terms of Service", urlString: Self.termsOfServiceURL, from: screen)
             case .editProfile:
                 self.showProfileForm(mode: .editing, from: screen)
             case .blacklist:
@@ -575,8 +577,8 @@ final class AppCoordinator: NSObject, UITabBarControllerDelegate {
         currentNavigationController?.pushSecondLevel(screen, animated: true)
     }
 
-    private func openInternalWebPage(title: String, from source: UIViewController) {
-        guard let url = URL(string: "https://www.baidu.com") else { return }
+    private func openInternalWebPage(title: String, urlString: String, from source: UIViewController) {
+        guard let url = URL(string: urlString) else { return }
         let screen = InternalWebViewController(title: title, url: url)
         screen.onBack = { [weak screen] in
             screen?.navigationController?.popViewController(animated: true)
