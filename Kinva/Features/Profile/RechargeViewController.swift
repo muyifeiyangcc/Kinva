@@ -3,8 +3,8 @@ import UIKit
 final class RechargeTierView: UIView {
     private let gradientLayer = CAGradientLayer()
     let diamondImageView = UIImageView(image: UIImage(named: "diamond")?.withRenderingMode(.alwaysOriginal))
-    let amountLabel = kinvaProfileLabel(size: 25, weight: .bold, textStyle: .title2)
-    let priceLabel = kinvaProfileLabel(size: 17, weight: .bold, textStyle: .headline)
+    let amountLabel = kinvaProfileLabel(size: 19, weight: .bold, textStyle: .title3)
+    let priceLabel = kinvaProfileLabel(size: 13, weight: .bold, textStyle: .subheadline)
     let continueButton = UIButton(type: .system)
     var onContinue: (() -> Void)?
 
@@ -24,13 +24,13 @@ final class RechargeTierView: UIView {
         round(15)
 
         diamondImageView.contentMode = .scaleAspectFit
-        amountLabel.font = rechargeRoundedFont(25, weight: .bold)
+        amountLabel.font = rechargeRoundedFont(19, weight: .bold)
         amountLabel.textAlignment = .center
-        priceLabel.font = rechargeRoundedFont(17, weight: .bold)
+        priceLabel.font = rechargeRoundedFont(13, weight: .bold)
         priceLabel.textAlignment = .center
         continueButton.setTitle("Continue", for: .normal)
         continueButton.setTitleColor(.white, for: .normal)
-        continueButton.titleLabel?.font = rechargeRoundedFont(16, weight: .bold)
+        continueButton.titleLabel?.font = rechargeRoundedFont(12, weight: .bold)
         continueButton.backgroundColor = AppTheme.blue
         continueButton.round(12)
         continueButton.addTarget(self, action: #selector(continueTapped), for: .touchUpInside)
@@ -38,18 +38,18 @@ final class RechargeTierView: UIView {
         let stack = UIStackView(arrangedSubviews: [diamondImageView, amountLabel, priceLabel, continueButton])
         stack.axis = .vertical
         stack.alignment = .fill
-        stack.spacing = 5
-        stack.setCustomSpacing(10, after: priceLabel)
+        stack.spacing = 4
+        stack.setCustomSpacing(7, after: priceLabel)
         stack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(stack)
         NSLayoutConstraint.activate([
-            heightAnchor.constraint(equalToConstant: 196),
-            stack.topAnchor.constraint(equalTo: topAnchor, constant: 18),
-            stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
-            stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -18),
-            diamondImageView.heightAnchor.constraint(equalToConstant: 50),
-            continueButton.heightAnchor.constraint(equalToConstant: 36)
+            heightAnchor.constraint(equalToConstant: 154),
+            stack.topAnchor.constraint(equalTo: topAnchor, constant: 12),
+            stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
+            stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12),
+            diamondImageView.heightAnchor.constraint(equalToConstant: 39),
+            continueButton.heightAnchor.constraint(equalToConstant: 31)
         ])
     }
 
@@ -116,7 +116,7 @@ final class RechargeViewController: BaseScrollViewController {
         title.font = rechargeRoundedFont(30, weight: .bold)
         title.accessibilityTraits = .header
         tiersStack.axis = .vertical
-        tiersStack.spacing = 11
+        tiersStack.spacing = 6
         let cardStack = UIStackView(arrangedSubviews: [title, tiersStack])
         cardStack.axis = .vertical
         cardStack.spacing = 15
@@ -148,20 +148,21 @@ final class RechargeViewController: BaseScrollViewController {
             $0.removeFromSuperview()
         }
 
-        for start in stride(from: 0, to: tiers.count, by: 2) {
+        let columnCount = 3
+        for start in stride(from: 0, to: tiers.count, by: columnCount) {
             let row = UIStackView()
             row.axis = .horizontal
             row.distribution = .fillEqually
             row.alignment = .fill
-            row.spacing = 11
-            for index in start..<min(start + 2, tiers.count) {
+            row.spacing = 6
+            for index in start..<min(start + columnCount, tiers.count) {
                 let tier = tiers[index]
                 let view = RechargeTierView()
                 view.configure(amount: tier.diamonds, price: tier.price)
                 view.onContinue = { [weak self] in self?.onSelectTier?(tier) }
                 row.addArrangedSubview(view)
             }
-            if row.arrangedSubviews.count == 1 {
+            while row.arrangedSubviews.count < columnCount {
                 let placeholder = UIView()
                 placeholder.backgroundColor = .clear
                 placeholder.isUserInteractionEnabled = false
