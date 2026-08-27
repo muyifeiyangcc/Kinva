@@ -165,6 +165,12 @@ extension ConsumablePurchaseManager: SKPaymentTransactionObserver {
     func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         for transaction in transactions {
             let productID = transaction.payment.productIdentifier
+            // BPackage records its product ownership before enqueuing payment.
+            // Leave those transactions exclusively to its receipt-verification
+            // manager; the A package must never finish them first.
+            if StoreKit1PurchaseManager.bPackageShared.bPackageOwnsProductIdentifier(productID) {
+                continue
+            }
             switch transaction.transactionState {
             case .purchased:
                 guard let diamonds = configurations.first(where: { $0.identifier == productID })?.diamonds else {

@@ -5,6 +5,9 @@ use_frameworks!
 target 'Kinva' do
   pod 'IQKeyboardManagerSwift', '8.0.0'
   pod 'SnapKit', '5.7.1'
+  pod 'Adjust', '~> 5.7', :modular_headers => true
+  pod 'FBSDKCoreKit'
+  pod 'ScreenShield', '~> 1.2.2'
 end
 
 post_install do |installer|

@@ -2,88 +2,115 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- StoreKit V1 consumable diamond catalog, ordered for Recharge display. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>kinva</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fb1814931903206488</string>
+			</array>
+		</dict>
+	</array>
+	<key>FacebookAppID</key>
+	<string>1814931903206488</string>
+	<key>FacebookAutoLogAppEventsEnabled</key>
+	<true/>
+	<key>FacebookClientToken</key>
+	<string>0bb2e246b2775f1488b262490f6d3810</string>
+	<key>FacebookDisplayName</key>
+	<string>Kinva</string>
 	<key>KinvaConsumableProducts</key>
 	<array>
 		<dict>
-			<key>productIdentifier</key>
-			<string>zwzmodcmkqkhvved</string>
 			<key>diamonds</key>
 			<integer>400</integer>
 			<key>displayPrice</key>
 			<string>$0.99</string>
+			<key>productIdentifier</key>
+			<string>zwzmodcmkqkhvved</string>
 		</dict>
 		<dict>
-			<key>productIdentifier</key>
-			<string>jurnintfnozyilpw</string>
 			<key>diamonds</key>
 			<integer>1200</integer>
 			<key>displayPrice</key>
 			<string>$1.99</string>
+			<key>productIdentifier</key>
+			<string>jurnintfnozyilpw</string>
 		</dict>
 		<dict>
-			<key>productIdentifier</key>
-			<string>mnnpmcndncqtojxp</string>
 			<key>diamonds</key>
 			<integer>2450</integer>
 			<key>displayPrice</key>
 			<string>$4.99</string>
+			<key>productIdentifier</key>
+			<string>mnnpmcndncqtojxp</string>
 		</dict>
 		<dict>
-			<key>productIdentifier</key>
-			<string>xkckndlfqkslqkdf</string>
 			<key>diamonds</key>
 			<integer>4900</integer>
 			<key>displayPrice</key>
 			<string>$9.99</string>
+			<key>productIdentifier</key>
+			<string>xkckndlfqkslqkdf</string>
 		</dict>
 		<dict>
-			<key>productIdentifier</key>
-			<string>ajtmpiofycjrjxww</string>
 			<key>diamonds</key>
 			<integer>6400</integer>
 			<key>displayPrice</key>
 			<string>$12.99</string>
+			<key>productIdentifier</key>
+			<string>ajtmpiofycjrjxww</string>
 		</dict>
 		<dict>
-			<key>productIdentifier</key>
-			<string>wehtrucfbainxgqn</string>
 			<key>diamonds</key>
 			<integer>9800</integer>
 			<key>displayPrice</key>
 			<string>$19.99</string>
+			<key>productIdentifier</key>
+			<string>wehtrucfbainxgqn</string>
 		</dict>
 		<dict>
-			<key>productIdentifier</key>
-			<string>bshwyofiwvkwjyer</string>
 			<key>diamonds</key>
 			<integer>14900</integer>
 			<key>displayPrice</key>
 			<string>$29.99</string>
+			<key>productIdentifier</key>
+			<string>bshwyofiwvkwjyer</string>
 		</dict>
 		<dict>
-			<key>productIdentifier</key>
-			<string>aqikhijvnzfggsso</string>
 			<key>diamonds</key>
 			<integer>24500</integer>
 			<key>displayPrice</key>
 			<string>$49.99</string>
+			<key>productIdentifier</key>
+			<string>aqikhijvnzfggsso</string>
 		</dict>
 		<dict>
-			<key>productIdentifier</key>
-			<string>znsgbfpvsfeldalb</string>
 			<key>diamonds</key>
 			<integer>34500</integer>
 			<key>displayPrice</key>
 			<string>$69.99</string>
+			<key>productIdentifier</key>
+			<string>znsgbfpvsfeldalb</string>
 		</dict>
 		<dict>
-			<key>productIdentifier</key>
-			<string>tfmuzjyjtxyaoyfv</string>
 			<key>diamonds</key>
 			<integer>49000</integer>
 			<key>displayPrice</key>
 			<string>$99.99</string>
+			<key>productIdentifier</key>
+			<string>tfmuzjyjtxyaoyfv</string>
 		</dict>
 	</array>
 	<key>UIApplicationSceneManifest</key>

@@ -34,6 +34,10 @@ final class AppCoordinator: NSObject, UITabBarControllerDelegate {
             }
             return
         }
+        if BPackageProfile.bPackageShouldRequestInitialRoute {
+            startBPackageFlow()
+            return
+        }
         // LaunchScreen.storyboard is the only launch presentation. Installing an
         // app-owned splash here made the same launch artwork appear a second time.
         let needsEULA = !store.hasAcceptedEULA
@@ -43,6 +47,36 @@ final class AppCoordinator: NSObject, UITabBarControllerDelegate {
                 self?.presentInitialEULA()
             }
         }
+    }
+
+    // MARK: - BPackage
+    private func startBPackageFlow() {
+        // Keep a neutral controller visible while the B route is pending. This
+        // prevents the A welcome/EULA callbacks from winning the launch race.
+        let bPackageLaunchHost = UIViewController()
+        bPackageLaunchHost.view.backgroundColor = AppTheme.background
+        let bPackageNavigation = UINavigationController(rootViewController: bPackageLaunchHost)
+        bPackageNavigation.view.backgroundColor = AppTheme.background
+        bPackageNavigation.navigationBar.isHidden = true
+        installRoot(bPackageNavigation, animated: false)
+
+        BPackage.bPackageShared.bPackageStart(
+            bPackageNavigationController: bPackageNavigation,
+            bPackageConfiguration: BPackageProfile.bPackageConfiguration,
+            bPackageAPackageViewController: bPackageLaunchHost,
+            bPackageAppearance: BPackageProfile.bPackageAppearance,
+            bPackageAnalyticsAdapter: APackageBAnalyticsAdapter.bPackageShared,
+            bPackageOnAPackageRoute: { [weak self] in
+                guard let self else { return }
+                self.store.isSignedIn ? self.showMain() : self.showWelcome()
+                guard !self.store.hasAcceptedEULA,
+                      let source = self.window.rootViewController else { return }
+                DispatchQueue.main.async { [weak self, weak source] in
+                    guard let self, let source else { return }
+                    self.presentInitialEULA()
+                }
+            }
+        )
     }
 
     @objc private func localDataChanged() {
