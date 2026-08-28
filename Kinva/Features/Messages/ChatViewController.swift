@@ -1,4 +1,5 @@
 import UIKit
+import AVFoundation
 
 final class ChatViewController: UIViewController {
     enum InputMode { case text, voice }
@@ -11,6 +12,7 @@ final class ChatViewController: UIViewController {
     var onVoicePressBegan: (() -> Void)?
     var onVoicePressEnded: ((Bool) -> Void)?
     var onPlayVoice: ((ChatMessageViewModel) -> Bool)?
+    var onVideoCall: (() -> Void)?
     var onRetry: (() -> Void)?
 
     private let header = UIView()
@@ -30,6 +32,7 @@ final class ChatViewController: UIViewController {
     private let textField = UITextField()
     private let sendButton = UIButton(type: .system)
     private let holdButton = UIButton(type: .system)
+    private let videoCallButton = UIButton(type: .system)
     private let stateView = ChatStateView()
     private var didReceiveDisplay = false
     private var participant: MessageParticipantViewModel?
@@ -79,6 +82,8 @@ final class ChatViewController: UIViewController {
         relationLabel.text = canSend ? nil : "Follow each other to unlock messages."
         inputRow.isUserInteractionEnabled = canSend
         inputRow.alpha = canSend ? 1 : 0.45
+        videoCallButton.isEnabled = canSend
+        videoCallButton.alpha = canSend ? 1 : 0.45
         emptyLabel.isHidden = !messages.isEmpty
         stateView.isHidden = true
         scrollView.isHidden = false
@@ -249,7 +254,19 @@ final class ChatViewController: UIViewController {
         holdButton.round(15)
         holdButton.heightAnchor.constraint(equalToConstant: 62).isActive = true
 
-        let inputStack = UIStackView(arrangedSubviews: [relationLabel, inputRow])
+        videoCallButton.setImage(UIImage(named: "video_call")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        videoCallButton.backgroundColor = .clear
+        videoCallButton.imageView?.contentMode = .scaleAspectFit
+        videoCallButton.accessibilityLabel = "Video call"
+        videoCallButton.widthAnchor.constraint(equalToConstant: 62).isActive = true
+        videoCallButton.heightAnchor.constraint(equalToConstant: 62).isActive = true
+
+        let inputControlsRow = UIStackView(arrangedSubviews: [inputRow, videoCallButton])
+        inputControlsRow.axis = .horizontal
+        inputControlsRow.alignment = .center
+        inputControlsRow.spacing = 10
+
+        let inputStack = UIStackView(arrangedSubviews: [relationLabel, inputControlsRow])
         inputStack.axis = .vertical
         inputStack.spacing = 8
         inputStack.translatesAutoresizingMaskIntoConstraints = false
@@ -262,6 +279,7 @@ final class ChatViewController: UIViewController {
         ])
         modeButton.addTarget(self, action: #selector(modeTapped), for: .touchUpInside)
         sendButton.addTarget(self, action: #selector(sendTapped), for: .touchUpInside)
+        videoCallButton.addTarget(self, action: #selector(videoCallTapped), for: .touchUpInside)
         holdButton.addTarget(self, action: #selector(voiceBegan), for: .touchDown)
         holdButton.addTarget(self, action: #selector(voiceEnded), for: [.touchUpInside, .touchUpOutside])
         holdButton.addTarget(self, action: #selector(voiceCancelled), for: .touchCancel)
@@ -335,6 +353,11 @@ final class ChatViewController: UIViewController {
         onSendText?(text)
         textField.text = nil
     }
+    @objc private func videoCallTapped() {
+        guard canSend else { return }
+        textField.resignFirstResponder()
+        onVideoCall?()
+    }
     @objc private func voiceBegan() { guard canSend else { return }; onVoicePressBegan?() }
     @objc private func voiceEnded() { guard canSend else { return }; onVoicePressEnded?(false) }
     @objc private func voiceCancelled() { guard canSend else { return }; onVoicePressEnded?(true) }
@@ -356,6 +379,175 @@ final class ChatViewController: UIViewController {
             guard case .voice = message.kind, let bubble = bubbleViews[message.id] else { continue }
             bubble.setVoicePlaying(playingVoiceMessageID == message.id)
         }
+    }
+}
+
+final class VideoCallViewController: UIViewController {
+    var onHangUp: (() -> Void)?
+
+    private let participant: MessageParticipantViewModel
+    private let backgroundImage: UIImage?
+    private let tonePlayer = VideoCallTonePlayer()
+    private let backgroundImageView = UIImageView()
+    private let informationPanel = UIView()
+
+    init(participant: MessageParticipantViewModel, backgroundImage: UIImage?) {
+        self.participant = participant
+        self.backgroundImage = backgroundImage
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        buildLayout()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        tonePlayer.start()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        tonePlayer.stop()
+        super.viewWillDisappear(animated)
+    }
+
+    private func buildLayout() {
+        navigationController?.setNavigationBarHidden(true, animated: false)
+        view.backgroundColor = AppTheme.background
+
+        backgroundImageView.image = backgroundImage
+        backgroundImageView.contentMode = .scaleAspectFill
+        backgroundImageView.clipsToBounds = true
+        backgroundImageView.backgroundColor = UIColor(hex: 0xD8DDE2)
+        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(backgroundImageView)
+
+        informationPanel.backgroundColor = .white
+        informationPanel.layer.cornerRadius = 26
+        informationPanel.layer.cornerCurve = .continuous
+        informationPanel.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        informationPanel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(informationPanel)
+
+        let nameLabel = UILabel()
+        nameLabel.text = participant.name
+        nameLabel.font = AppTheme.font(29, .bold)
+        nameLabel.textColor = AppTheme.text
+        nameLabel.textAlignment = .center
+
+        let callingLabel = UILabel()
+        callingLabel.text = "You are calling \(participant.name) ..."
+        callingLabel.font = AppTheme.font(15, .bold)
+        callingLabel.textColor = AppTheme.text
+        callingLabel.textAlignment = .center
+        callingLabel.numberOfLines = 2
+
+        let hangUpButton = UIButton(type: .system)
+        hangUpButton.backgroundColor = .clear
+        hangUpButton.setImage(UIImage(named: "video_phone")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        hangUpButton.imageView?.contentMode = .scaleAspectFit
+        hangUpButton.layer.cornerRadius = 36
+        hangUpButton.layer.cornerCurve = .continuous
+        hangUpButton.accessibilityLabel = "End video call"
+        hangUpButton.addTarget(self, action: #selector(hangUpTapped), for: .touchUpInside)
+
+        [nameLabel, callingLabel, hangUpButton].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            informationPanel.addSubview($0)
+        }
+
+        NSLayoutConstraint.activate([
+            backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            backgroundImageView.bottomAnchor.constraint(equalTo: informationPanel.topAnchor, constant: 22),
+
+            informationPanel.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            informationPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            informationPanel.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            informationPanel.heightAnchor.constraint(equalToConstant: 246),
+
+            nameLabel.topAnchor.constraint(equalTo: informationPanel.topAnchor, constant: 36),
+            nameLabel.leadingAnchor.constraint(equalTo: informationPanel.leadingAnchor, constant: 24),
+            nameLabel.trailingAnchor.constraint(equalTo: informationPanel.trailingAnchor, constant: -24),
+
+            callingLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 11),
+            callingLabel.leadingAnchor.constraint(equalTo: informationPanel.leadingAnchor, constant: 24),
+            callingLabel.trailingAnchor.constraint(equalTo: informationPanel.trailingAnchor, constant: -24),
+
+            hangUpButton.topAnchor.constraint(equalTo: callingLabel.bottomAnchor, constant: 29),
+            hangUpButton.centerXAnchor.constraint(equalTo: informationPanel.centerXAnchor),
+            hangUpButton.widthAnchor.constraint(equalToConstant: 72),
+            hangUpButton.heightAnchor.constraint(equalToConstant: 72)
+        ])
+    }
+
+    @objc private func hangUpTapped() {
+        tonePlayer.stop()
+        onHangUp?()
+    }
+}
+
+private final class VideoCallTonePlayer {
+    private let engine = AVAudioEngine()
+    private let node = AVAudioPlayerNode()
+    private var isPlaying = false
+
+    init() {
+        engine.attach(node)
+        let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
+        engine.connect(node, to: engine.mainMixerNode, format: format)
+    }
+
+    func start() {
+        guard !isPlaying else { return }
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(.playback, mode: .default, options: [.duckOthers])
+            try session.setActive(true)
+            let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
+            guard let buffer = makeRingbackBuffer(format: format) else { return }
+            node.scheduleBuffer(buffer, at: nil, options: .loops)
+            try engine.start()
+            node.play()
+            isPlaying = true
+        } catch {
+            stop()
+        }
+    }
+
+    func stop() {
+        guard isPlaying || engine.isRunning else { return }
+        node.stop()
+        engine.stop()
+        isPlaying = false
+        try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
+    }
+
+    private func makeRingbackBuffer(format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        let sampleRate = format.sampleRate
+        let duration = 4.0
+        let frameCount = AVAudioFrameCount(sampleRate * duration)
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount),
+              let samples = buffer.floatChannelData?[0] else { return nil }
+        buffer.frameLength = frameCount
+        for frame in 0..<Int(frameCount) {
+            let time = Double(frame) / sampleRate
+            let activeTime = time.truncatingRemainder(dividingBy: duration)
+            guard activeTime < 1.6 else {
+                samples[frame] = 0
+                continue
+            }
+            let edge = min(min(activeTime / 0.025, (1.6 - activeTime) / 0.025), 1)
+            let tone = sin(2 * .pi * 440 * time) + sin(2 * .pi * 480 * time)
+            samples[frame] = Float(0.09 * max(0, edge) * tone)
+        }
+        return buffer
     }
 }
 

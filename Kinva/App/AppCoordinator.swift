@@ -549,6 +549,22 @@ final class AppCoordinator: NSObject, UITabBarControllerDelegate {
         }
         screen.onBack = { [weak screen] in screen?.navigationController?.popViewController(animated: true) }; screen.onRetry = display
         screen.onAuthor = { [weak self] id in self?.openProfile(userID: id) }
+        screen.onVideoCall = { [weak self, weak screen] in
+            guard let self else { return }
+            let avatar = kinvaAvatarImage(userID: participant.id)
+            let postImage = self.store.visiblePosts()
+                .first(where: { $0.authorID == participant.id })?
+                .imageTokens
+                .lazy
+                .compactMap { kinvaImage(token: $0) }
+                .first
+            let call = VideoCallViewController(participant: participant,
+                                               backgroundImage: avatar ?? postImage)
+            call.onHangUp = { [weak call] in
+                call?.navigationController?.popViewController(animated: true)
+            }
+            screen?.navigationController?.pushSecondLevel(call, animated: true)
+        }
         screen.onMenu = { [weak self] anchor in self?.showUserActions(targetID: participant.id, targetType: "conversation", anchor: anchor) }
         screen.onSendText = { [weak self, weak screen] text in do { try self?.store.sendText(text, conversationID: conversationID); display(); self?.refreshMessages() } catch { screen?.showLocalAlert(title: "Could not send", message: error.localizedDescription) } }
         let handleRecording: (Result<LocalVoiceRecording, Error>) -> Void = { [weak self, weak screen] result in
